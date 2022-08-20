@@ -3,6 +3,7 @@
 package appregistry
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/gentlemanautomaton/winapp/unpackaged"
@@ -47,6 +48,9 @@ var Views = []View{Global32, Global64, User32, User64}
 
 // open opens a registry key in the view.
 func (v View) open(k registry.Key, path string, access uint32) (registry.Key, error) {
+	if v.name == "" {
+		return 0, errors.New("use of unprepared application registry view")
+	}
 	return registry.OpenKey(k, path, access|v.access)
 }
 
