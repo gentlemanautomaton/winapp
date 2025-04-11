@@ -18,7 +18,7 @@ func Example() {
 	flag.BoolVar(&uninstall, "u", false, "uninstall app")
 	flag.Parse()
 
-	view := appregistry.Global64
+	view := appregistry.Machine64
 	app := unpackaged.App{
 		ID: "winapp-test-app",
 		Attributes: appattr.List{

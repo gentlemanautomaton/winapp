@@ -10,7 +10,7 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
-// View provides a view of the global or user application registry, either
+// View provides a view of the machine or user application registry, either
 // 32-bit or 64-bit.
 type View struct {
 	name   string
@@ -23,18 +23,18 @@ const root = `SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall`
 
 // These are the four possible views of installed applications.
 var (
-	global32 = View{name: "32-bit global", key: registry.LOCAL_MACHINE, access: registry.WOW64_32KEY}
-	global64 = View{name: "64-bit global", key: registry.LOCAL_MACHINE, access: registry.WOW64_64KEY}
-	user32   = View{name: "32-bit user", key: registry.CURRENT_USER, access: registry.WOW64_32KEY}
-	user64   = View{name: "64-bit user", key: registry.CURRENT_USER, access: registry.WOW64_64KEY}
+	machine32 = View{name: "32-bit machine", key: registry.LOCAL_MACHINE, access: registry.WOW64_32KEY}
+	machine64 = View{name: "64-bit machine", key: registry.LOCAL_MACHINE, access: registry.WOW64_64KEY}
+	user32    = View{name: "32-bit user", key: registry.CURRENT_USER, access: registry.WOW64_32KEY}
+	user64    = View{name: "64-bit user", key: registry.CURRENT_USER, access: registry.WOW64_64KEY}
 )
 
 var (
-	// Global32 accesses the 32-bit global application registry.
-	Global32 = global32
+	// Machine32 accesses the 32-bit machine application registry.
+	Machine32 = machine32
 
-	// Global64 accesses the 64-bit global application registry.
-	Global64 = global64
+	// Machine64 accesses the 64-bit machine application registry.
+	Machine64 = machine64
 
 	// User32 accesses the 32-bit user application registry.
 	User32 = user32
@@ -44,7 +44,7 @@ var (
 )
 
 // Views is a slice of all available application views.
-var Views = []View{Global32, Global64, User32, User64}
+var Views = []View{Machine32, Machine64, User32, User64}
 
 // open opens a registry key in the view.
 func (v View) open(k registry.Key, path string, access uint32) (registry.Key, error) {
