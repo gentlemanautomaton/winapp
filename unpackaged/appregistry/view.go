@@ -6,7 +6,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/gentlemanautomaton/winapp/appcode"
 	"github.com/gentlemanautomaton/winapp/unpackaged"
+	"github.com/gentlemanautomaton/winapp/unpackaged/appscope"
 	"golang.org/x/sys/windows/registry"
 )
 
@@ -14,8 +16,10 @@ import (
 // 32-bit or 64-bit.
 type View struct {
 	name   string
-	access uint32
+	arch   appcode.Architecture
+	scope  appscope.Scope
 	key    registry.Key
+	access uint32
 }
 
 // Registry path for both HKLM and HKCU.
@@ -23,10 +27,10 @@ const root = `SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall`
 
 // These are the four possible views of installed applications.
 var (
-	machine32 = View{name: "32-bit machine", key: registry.LOCAL_MACHINE, access: registry.WOW64_32KEY}
-	machine64 = View{name: "64-bit machine", key: registry.LOCAL_MACHINE, access: registry.WOW64_64KEY}
-	user32    = View{name: "32-bit user", key: registry.CURRENT_USER, access: registry.WOW64_32KEY}
-	user64    = View{name: "64-bit user", key: registry.CURRENT_USER, access: registry.WOW64_64KEY}
+	machine32 = View{name: "32-bit machine", arch: appcode.X86, scope: appscope.Machine, key: registry.LOCAL_MACHINE, access: registry.WOW64_32KEY}
+	machine64 = View{name: "64-bit machine", arch: appcode.X64, scope: appscope.Machine, key: registry.LOCAL_MACHINE, access: registry.WOW64_64KEY}
+	user32    = View{name: "32-bit user", arch: appcode.X86, scope: appscope.User, key: registry.CURRENT_USER, access: registry.WOW64_32KEY}
+	user64    = View{name: "64-bit user", arch: appcode.X64, scope: appscope.User, key: registry.CURRENT_USER, access: registry.WOW64_64KEY}
 )
 
 var (
@@ -46,6 +50,39 @@ var (
 // Views is a slice of all available application views.
 var Views = []View{Machine32, Machine64, User32, User64}
 
+// ViewFor returns a view for the given architecture and scope. It returns an
+// error if either are not recognized.
+func ViewFor(arch appcode.Architecture, scope appscope.Scope) (View, error) {
+	switch arch {
+	case appcode.X64:
+		switch scope {
+		case appscope.Machine:
+			return machine64, nil
+		case appscope.User:
+			return user64, nil
+		case "":
+			return View{}, errors.New("missing application scope")
+		default:
+			return View{}, fmt.Errorf("unrecognized application scope: %s", scope)
+		}
+	case appcode.X86:
+		switch scope {
+		case appscope.Machine:
+			return machine32, nil
+		case appscope.User:
+			return user32, nil
+		case "":
+			return View{}, errors.New("missing application scope")
+		default:
+			return View{}, fmt.Errorf("unrecognized application scope: %s", scope)
+		}
+	case "":
+		return View{}, errors.New("missing application architecture")
+	default:
+		return View{}, fmt.Errorf("unrecognized application architecture: %s", arch)
+	}
+}
+
 // open opens a registry key in the view.
 func (v View) open(k registry.Key, path string, access uint32) (registry.Key, error) {
 	if v.name == "" {
@@ -62,6 +99,16 @@ func (v View) root(access uint32) (registry.Key, error) {
 // Name returns the name of the view.
 func (v View) Name() string {
 	return v.name
+}
+
+// Architecture returns the architecture of the view.
+func (v View) Architecture() appcode.Architecture {
+	return v.arch
+}
+
+// Scope returns the scope of the view.
+func (v View) Scope() appscope.Scope {
+	return v.scope
 }
 
 // Add attempts to add the given unpackaged app to the Windows registry.
