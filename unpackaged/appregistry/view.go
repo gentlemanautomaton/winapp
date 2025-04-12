@@ -5,6 +5,7 @@ package appregistry
 import (
 	"errors"
 	"fmt"
+	"syscall"
 
 	"github.com/gentlemanautomaton/winapp/appcode"
 	"github.com/gentlemanautomaton/winapp/unpackaged"
@@ -149,6 +150,27 @@ func (v View) Remove(id unpackaged.AppID) error {
 	defer root.Close()
 
 	return registry.DeleteKey(root, string(id))
+}
+
+// Contains returns true if the given unpackaged app ID is present in the
+// Windows registry.
+func (v View) Contains(id unpackaged.AppID) (bool, error) {
+	root, err := v.root(registry.ENUMERATE_SUB_KEYS)
+	if err != nil {
+		return false, err
+	}
+	defer root.Close()
+
+	key, err := v.open(root, string(id), registry.QUERY_VALUE)
+	if err != nil {
+		if err == syscall.ERROR_FILE_NOT_FOUND {
+			return false, nil
+		}
+		return false, err
+	}
+	defer key.Close()
+
+	return true, nil
 }
 
 // Get attempts to retrieve the requested unpackaged app from the Windows
