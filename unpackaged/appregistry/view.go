@@ -151,7 +151,7 @@ func (v View) Remove(id unpackaged.AppID) error {
 	return registry.DeleteKey(root, string(id))
 }
 
-// Add attempts to add the given application component to the Windows
+// Get attempts to retrieve the requested unpackaged app from the Windows
 // registry.
 func (v View) Get(id unpackaged.AppID) (unpackaged.App, error) {
 	root, err := v.root(registry.ENUMERATE_SUB_KEYS)
